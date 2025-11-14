@@ -2,7 +2,6 @@
 
 use std::process::Command;
 use reqwest;
-use tauri::Manager;
 
 #[tauri::command]
 fn has_virtual_device() -> bool {
@@ -153,11 +152,6 @@ fn main() {
             has_virtual_device,
             install_virtual_device
         ])
-        .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            window.set_always_on_top(true).unwrap();
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

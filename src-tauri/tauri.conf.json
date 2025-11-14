@@ -1,51 +1,38 @@
 {
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "tauri-transcriber",
+  "version": "1.0.0",
+  "identifier": "com.tauri.transcriber",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "实时转录",
-    "version": "1.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": true,
-      "shell": {
-        "all": true
-      },
-      "window": {
-        "all": true
-      },
-      "http": {
-        "all": true,
-        "request": true
-      },
-      "fs": {
-        "all": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.transcriber.app"
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
     "windows": [
       {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "实时转录",
-        "width": 600,
-        "height": 500,
+        "title": "tauri-transcriber",
+        "width": 140,
+        "height": 140,
         "decorations": false,
         "transparent": true,
-        "alwaysOnTop": true
+        "resizable": false
       }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
     ]
   }
 }
