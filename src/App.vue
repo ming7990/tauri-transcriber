@@ -58,15 +58,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { appWindow } from '@tauri-apps/api/window'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAudioStore } from './stores/audioStore'
 import VirtualDeviceWizard from './components/VirtualDeviceWizard.vue'
 
 const audioStore = useAudioStore()
 const showWizard = ref(false)
 
-const minimizeWindow = () => appWindow.minimize()
-const closeWindow = () => appWindow.close()
+const minimizeWindow = () => getCurrentWindow().minimize()
+const closeWindow = () => getCurrentWindow().close()
 
 const toggleMic = async () => {
   if (audioStore.isMicActive) {

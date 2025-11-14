@@ -82,7 +82,7 @@ try:
     last_transcript = ""
     last_transcript_time = 0
     transcript_threshold = 0.8  # 文本相似度阈值
-    vad_threshold = 0.0001  # 提高VAD阈值，避免检测到噪声
+    vad_threshold = 0.00001  # 降低VAD阈值，检测更微弱的声音
     
     # 简单的语音活动检测 (VAD)
     def is_speech_active(audio_data):

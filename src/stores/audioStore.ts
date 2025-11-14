@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 import { AudioCapture } from '../utils/audioCapture'
 
 interface Transcription {
@@ -55,8 +55,19 @@ export const useAudioStore = defineStore('audio', () => {
   }
 
   const startSpeaker = async () => {
+    if (isSpeakerActive.value) return
+
     try {
       status.value = '正在启动扬声器捕获...'
+      
+      // 检查虚拟设备
+      const hasDevice = await invoke<boolean>('has_virtual_device')
+      console.log('虚拟设备检查结果:', hasDevice)
+      
+      if (!hasDevice) {
+        console.warn('未找到虚拟音频设备，使用默认设备')
+      }
+      
       audioCapture = new AudioCapture('speaker')
       
       audioCapture.onTranscription = (text: string) => {
@@ -73,9 +84,10 @@ export const useAudioStore = defineStore('audio', () => {
       await audioCapture.start()
       isSpeakerActive.value = true
       status.value = '扬声器捕获运行中'
-    } catch (e) {
-      status.value = '扬声器捕获失败'
-      console.error('扬声器捕获错误:', e)
+    } catch (error) {
+      status.value = `扬声器捕获失败: ${error instanceof Error ? error.message : '未知错误'}`
+      console.error('启动扬声器捕获失败:', error)
+      isSpeakerActive.value = false
     }
   }
 
