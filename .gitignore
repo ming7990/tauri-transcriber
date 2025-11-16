@@ -49,6 +49,8 @@ MANIFEST
 venv/
 env/
 ENV/
+.venv/
+python-backend/.venv/
 
 # Tauri
 src-tauri/target/
