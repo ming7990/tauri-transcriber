@@ -4,11 +4,17 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-tauri = { version = "2.9", features = [] }
+tauri = { version = "2.9", features = ["wry"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.11", features = ["stream"] }
+# 已移除虚拟设备安装逻辑，保留依赖以防后续扩展时使用
+reqwest = { version = "0.11", features = ["stream"], optional = true }
+wasapi = "0.17"
+anyhow = "1"
+futures = "0.3"
+tokio-tungstenite = { version = "0.21", features = ["tokio-native-tls"] }
+bytemuck = "1"
 
 [build-dependencies]
 tauri-build = { version = "2.5", features = [] }

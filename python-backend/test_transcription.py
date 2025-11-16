@@ -7,54 +7,35 @@ async def test_transcription():
     print("1. 连接到WebSocket服务器...")
     
     try:
-        # 连接到后端WebSocket服务
         async with websockets.connect("ws://localhost:8765") as websocket:
             print("✅ 连接成功！")
-            
-            # 2. 发送状态检查命令
+
             print("\n2. 发送状态检查命令...")
             await websocket.send("status")
-            
-            # 接收状态响应
             status_response = await websocket.recv()
             print(f"✅ 收到状态响应: {status_response}")
-            
-            # 3. 生成测试音频数据（16kHz, 16位PCM格式）
-            print("\n3. 生成测试音频数据...")
-            
-            # 生成一个简单的正弦波测试音频
-            sample_rate = 16000  # 采样率
-            duration = 2.0       # 时长2秒
-            frequency = 440      # 440Hz音调（A4）
-            volume = 0.5         # 音量
-            
-            # 生成时间数组
-            t = np.linspace(0, duration, int(sample_rate * duration), False)
-            
-            # 生成正弦波
-            sine_wave = np.sin(2 * np.pi * frequency * t) * volume
-            
-            # 转换为16位整数PCM格式
-            pcm_data = np.int16(sine_wave * 32767)
-            
-            # 转换为字节数据
-            audio_bytes = pcm_data.tobytes()
-            
-            print(f"✅ 生成音频数据成功，长度: {len(audio_bytes)}字节")
-            print(f"   采样率: {sample_rate}Hz, 时长: {duration}秒, 频率: {frequency}Hz")
-            
-            # 4. 发送PCM数据进行转录
-            print("\n4. 发送音频数据进行转录...")
-            await websocket.send(audio_bytes)
-            
-            # 5. 接收转录结果
-            transcription_result = await websocket.recv()
-            print(f"\n✅ 转录测试完成！")
-            print(f"转录结果: {transcription_result}")
-            
-            # 提示：由于我们使用的是生成的正弦波（没有实际语音），转录结果可能会是空白或噪声
-            print("\n注意: 由于使用的是正弦波测试数据而非实际语音，转录结果可能为空或显示噪声")
-            print("要测试真实语音转录，请修改脚本以读取实际语音文件或使用麦克风捕获真实语音数据")
+
+            print("\n3. 生成并发送不同时长音频数据...")
+            sample_rate = 16000
+            frequency = 440
+            volume = 0.5
+            durations = [2.0, 4.0, 6.0]
+
+            for d in durations:
+                t = np.linspace(0, d, int(sample_rate * d), False)
+                sine_wave = np.sin(2 * np.pi * frequency * t) * volume
+                pcm_data = np.int16(sine_wave * 32767)
+                audio_bytes = pcm_data.tobytes()
+
+                print(f"\n➡️ 发送音频: 时长 {d}s, 字节 {len(audio_bytes)}")
+                await websocket.send(audio_bytes)
+                try:
+                    transcription_result = await asyncio.wait_for(websocket.recv(), timeout=10)
+                    print(f"收到转录: {transcription_result}")
+                except Exception as e:
+                    print(f"等待转录超时或失败: {e}")
+
+            print("\n提示: 正弦波非语音，转录可能为空或噪声")
             
     except Exception as e:
         print(f"❌ 测试失败: {e}")

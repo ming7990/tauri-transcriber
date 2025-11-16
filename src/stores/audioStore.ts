@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
 import { AudioCapture } from '../utils/audioCapture'
 
 interface Transcription {
@@ -16,18 +15,7 @@ export const useAudioStore = defineStore('audio', () => {
   
   let audioCapture: AudioCapture | null = null
 
-  const checkVirtualDevice = async (): Promise<boolean> => {
-    try {
-      status.value = '正在检查虚拟音频设备...'
-      const result = await invoke<boolean>('has_virtual_device')
-      status.value = result ? '虚拟音频设备已就绪' : '未检测到虚拟音频设备'
-      return result
-    } catch (e) {
-      console.error('检查虚拟设备失败:', e)
-      status.value = '检查设备失败'
-      return false
-    }
-  }
+  // 已移除虚拟音频设备检查逻辑，统一由 Tauri WASAPI 采集系统音频
 
   const startMicrophone = async () => {
     try {
@@ -56,31 +44,13 @@ export const useAudioStore = defineStore('audio', () => {
 
   const startSpeaker = async () => {
     if (isSpeakerActive.value) return
-
     try {
       status.value = '正在启动扬声器捕获...'
-      
-      // 检查虚拟设备
-      const hasDevice = await invoke<boolean>('has_virtual_device')
-      console.log('虚拟设备检查结果:', hasDevice)
-      
-      if (!hasDevice) {
-        console.warn('未找到虚拟音频设备，使用默认设备')
-      }
-      
       audioCapture = new AudioCapture('speaker')
-      
       audioCapture.onTranscription = (text: string) => {
-        transcriptions.value.push({
-          timestamp: new Date().toLocaleTimeString(),
-          text
-        })
+        transcriptions.value.push({ timestamp: new Date().toLocaleTimeString(), text })
       }
-      
-      audioCapture.onStatusChange = (newStatus: string) => {
-        status.value = newStatus
-      }
-      
+      audioCapture.onStatusChange = (newStatus: string) => { status.value = newStatus }
       await audioCapture.start()
       isSpeakerActive.value = true
       status.value = '扬声器捕获运行中'
@@ -115,7 +85,6 @@ export const useAudioStore = defineStore('audio', () => {
     isSpeakerActive,
     status,
     transcriptions,
-    checkVirtualDevice,
     startMicrophone,
     startSpeaker,
     stopCapture,

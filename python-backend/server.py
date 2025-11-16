@@ -8,6 +8,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_bufferin
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', line_buffering=True)
 
 print("=== 极简后端服务 ===")
+# 框架说明：桌面端通过 WASAPI 回环采集系统音频 → WebSocket 以 int16/16kHz PCM 发送到本服务
+# 本服务对音频进行滑窗聚合与简单 VAD → 调用 Whisper 进行转录 → 将文本广播给所有连接客户端（前端 UI / 桌面端）
 sys.stdout.flush()
 
 print("[1] 基础环境设置完成")
@@ -75,16 +77,18 @@ try:
     import websockets
     print(f"[4.4] websockets模块导入成功，版本: {websockets.__version__}")
     sys.stdout.flush()
+    # 已移除Python端的loopback与浏览器共享方案，统一由桌面端WASAPI采集
     
     # 全局状态
     vad_initialized = False
     vad_model = None
     last_transcript = ""
     last_transcript_time = 0
-    transcript_threshold = 0.8  # 文本相似度阈值
-    vad_threshold = 0.00001  # 降低VAD阈值，检测更微弱的声音
+    transcript_threshold = 0.5
+    vad_threshold = 0.00001
+    audio_buffer = bytearray()
     
-    # 简单的语音活动检测 (VAD)
+    # 简单的语音活动检测 (VAD)：基于能量阈值过滤静音，减少无意义识别
     def is_speech_active(audio_data):
         """简单的能量检测，判断是否有语音活动"""
         # 计算音频的能量 (RMS)
@@ -94,7 +98,7 @@ try:
         # 提高能量阈值，减少噪声检测
         return rms > vad_threshold
     
-    # 文本相似度计算 - 改进版
+    # 文本相似度计算 - 改进版：避免重复片段在 UI 刷屏
     def text_similarity(text1, text2):
         """计算两个文本的相似度，使用更准确的方法"""
         if not text1 or not text2:
@@ -141,7 +145,7 @@ try:
         
         return similarity
     
-    # 音频处理和转录功能
+    # 音频处理与转录：对滑窗音频做 VAD、Whisper 推理与去重
     def transcribe_audio(pcm_data):
         """使用Whisper模型转录PCM音频数据，包含VAD和去重"""
         global last_transcript, last_transcript_time
@@ -170,14 +174,17 @@ try:
                 print("[VAD] 检测到静默，跳过转录")
                 return ""
             
-            # 使用Whisper进行转录
+            # 使用Whisper进行转录：中文偏确定性、束搜索，提高短句稳定度
             print("[转录] 开始使用Whisper模型转录...")
             result = whisper_model.transcribe(
                 audio_data,
-                language="zh",  # 设置为中文转录
-                fp16=False,    # 在CPU上运行
+                language="zh",
+                fp16=False,
                 verbose=False,
-                no_speech_threshold=0.6  # 增加无语音阈值，减少误判
+                temperature=0.0,
+                beam_size=5,
+                condition_on_previous_text=False,
+                no_speech_threshold=0.3
             )
             
             current_transcript = result["text"].strip()
@@ -213,10 +220,26 @@ try:
             traceback.print_exc(file=sys.stdout)
             return ""
     
+    # 连接管理与广播
+    connected_clients = set()
+
+    async def broadcast_transcription(text):
+        try:
+            payload = json.dumps({"type": "transcription", "text": text})
+            send_tasks = [ws.send(payload) for ws in list(connected_clients)]
+            if send_tasks:
+                await asyncio.gather(*send_tasks, return_exceptions=True)
+        except Exception as e:
+            print(f"[广播] 发送转录失败: {e}")
+            sys.stdout.flush()
+
+    pass
+
     async def handle_connection(websocket, path):
         print(f"[5] 客户端连接: {path}")
         sys.stdout.flush()
         global vad_initialized, vad_model
+        connected_clients.add(websocket)
         
         try:
             while True:
@@ -243,6 +266,7 @@ try:
                         }
                         await websocket.send(json.dumps(status_response))
                         print("[5.1.2] 发送状态响应")
+                    
                     else:
                         # 其他文本消息的回显
                         echo_response = {
@@ -252,23 +276,22 @@ try:
                         await websocket.send(json.dumps(echo_response))
                 
                 elif isinstance(message, bytes):
-                    # 二进制PCM数据处理
+                    # 滑窗聚合：最多保留10秒音频；每满3秒触发一次识别
                     print(f"[5.1.3] 收到PCM数据，长度: {len(message)}字节")
-                    
-                    # 执行音频转录
-                    print("[5.1.4] 开始转录音频...")
-                    transcription = transcribe_audio(message)
-                    
-                    # 只有当转录结果不为空时才发送
-                    if transcription.strip():
-                        transcript_response = {
-                            "type": "transcription",
-                            "text": transcription
-                        }
-                        await websocket.send(json.dumps(transcript_response))
-                        print(f"[5.1.5] 转录完成: {transcription}")
-                    else:
-                        print("[5.1.5] 转录结果为空或被过滤，跳过发送")
+                    audio_buffer.extend(message)
+                    max_keep = 16000 * 10 * 2
+                    if len(audio_buffer) > max_keep:
+                        audio_buffer[:] = audio_buffer[-max_keep:]
+                    need = 16000 * 3 * 2
+                    if len(audio_buffer) >= need:
+                        print("[5.1.4] 开始转录音频...")
+                        chunk = bytes(audio_buffer[-need:])
+                        transcription = transcribe_audio(chunk)
+                        if transcription.strip():
+                            await broadcast_transcription(transcription)
+                            print(f"[5.1.5] 转录完成(已广播): {transcription}")
+                        else:
+                            print("[5.1.5] 转录结果为空或被过滤，跳过发送")
                 
                 sys.stdout.flush()
                 
@@ -281,6 +304,9 @@ try:
             import traceback
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
+        finally:
+            if websocket in connected_clients:
+                connected_clients.discard(websocket)
     
     # 启动WebSocket服务器
     print("[4.5] 启动WebSocket服务器...")

@@ -6,18 +6,20 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1421/#overlay",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
         "title": "tauri-transcriber",
-        "width": 140,
-        "height": 140,
+        "width": 68,
+        "height": 32,
         "decorations": false,
         "transparent": true,
-        "resizable": false
+        "resizable": false,
+        "shadow": false,
+        "visible": false
       }
     ],
     "security": {
@@ -34,5 +36,36 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "window": {
+      "label": "bubble",
+      "url": "bubble.html",
+      "x": 372,
+      "y": 1824
+    },
+    "acl": {
+      "all": false,
+      "permissions": {
+        "window": {
+          "scope": ["main", "bubble", "transcriber-main"],
+          "allow": [
+            "start-dragging",
+            "set-resizable",
+            "set-position",
+            "set-size",
+            "set-decorations",
+            "set-always-on-top",
+            "create",
+            "center",
+            "set-focus"
+          ]
+        },
+        "webview": {
+          "scope": ["main", "bubble", "transcriber-main"],
+          "allow": ["internal-toggle-devtools", "create-webview-window"]
+        }
+      }
+    }
   }
 }

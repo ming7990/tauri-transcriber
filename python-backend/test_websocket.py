@@ -10,8 +10,8 @@ async def test_websocket():
         async with websockets.connect("ws://localhost:8765") as websocket:
             print("✅ 连接成功！")
             
-            # 发送测试消息
-            test_message = "hello_backend"
+            # 发送启动回环采集指令
+            test_message = "start_speaker"
             print(f"发送测试消息: {test_message}")
             await websocket.send(test_message)
             
