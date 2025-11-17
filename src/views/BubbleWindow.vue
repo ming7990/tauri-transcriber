@@ -33,8 +33,8 @@ onMounted(async () => {
   }
 
   const diameter = 48
-  const rightMargin = 16
-  const bottomMargin = 120
+  const rightMargin = 100
+  const bottomMargin = 200
 
   // 放置窗口：优先恢复历史位置，其次按当前主屏幕右下角计算
   const place = async () => {

@@ -4,9 +4,8 @@
   "version": "1.0.0",
   "identifier": "com.tauri.transcriber",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run build",
     "beforeBuildCommand": "npm run build",
-    "devUrl": "http://localhost:1421/#overlay",
     "frontendDist": "../dist"
   },
   "app": {

@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::Command;
 use std::sync::{atomic::{AtomicBool, Ordering}};
 use tauri::State;
 use bytemuck;
@@ -61,7 +60,7 @@ async fn run_wasapi_loopback() -> Result<(), String> {
     let mode = StreamMode::EventsShared { autoconvert: true, buffer_duration_hns: 200_000 };
     audio_client.initialize_client(&desired_format, &Direction::Capture, &mode).map_err(|e| format!("{e}"))?;
     let _event = audio_client.set_get_eventhandle().map_err(|e| format!("{e}"))?;
-    let mut capture = audio_client.get_audiocaptureclient().map_err(|e| format!("{e}"))?;
+    let capture = audio_client.get_audiocaptureclient().map_err(|e| format!("{e}"))?;
     audio_client.start_stream().map_err(|e| format!("{e}"))?;
 
     // 连接本地后端 WebSocket

@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { AudioCapture } from '../utils/audioCapture'
 
 interface Transcription {
-  timestamp: string
+  startLabel: string
+  endLabel: string
   text: string
+  speaker: number
 }
 
 export const useAudioStore = defineStore('audio', () => {
@@ -23,9 +25,19 @@ export const useAudioStore = defineStore('audio', () => {
       audioCapture = new AudioCapture('mic')
       
       audioCapture.onTranscription = (text: string) => {
+        const now = new Date()
+        const start = new Date(now.getTime() - 3000)
+        const format = (d: Date) => {
+          const hh = String(d.getHours()).padStart(2, '0')
+          const mm = String(d.getMinutes()).padStart(2, '0')
+          const ss = String(d.getSeconds()).padStart(2, '0')
+          return `${hh}:${mm}:${ss}`
+        }
         transcriptions.value.push({
-          timestamp: new Date().toLocaleTimeString(),
-          text
+          startLabel: format(start),
+          endLabel: format(now),
+          text,
+          speaker: 1
         })
       }
       
@@ -48,7 +60,20 @@ export const useAudioStore = defineStore('audio', () => {
       status.value = '正在启动扬声器捕获...'
       audioCapture = new AudioCapture('speaker')
       audioCapture.onTranscription = (text: string) => {
-        transcriptions.value.push({ timestamp: new Date().toLocaleTimeString(), text })
+        const now = new Date()
+        const start = new Date(now.getTime() - 3000)
+        const format = (d: Date) => {
+          const hh = String(d.getHours()).padStart(2, '0')
+          const mm = String(d.getMinutes()).padStart(2, '0')
+          const ss = String(d.getSeconds()).padStart(2, '0')
+          return `${hh}:${mm}:${ss}`
+        }
+        transcriptions.value.push({
+          startLabel: format(start),
+          endLabel: format(now),
+          text,
+          speaker: 2
+        })
       }
       audioCapture.onStatusChange = (newStatus: string) => { status.value = newStatus }
       await audioCapture.start()

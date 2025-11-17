@@ -194,10 +194,10 @@ const openMain = async () => {
     const win = getCurrentWindow()
     isProgrammaticMove = true
     await win.setResizable(true)
-    await win.setDecorations(false)
+    await win.setDecorations(true)
     await win.setAlwaysOnTop(false)
     await win.setIgnoreCursorEvents(false)
-    await win.setSize(new LogicalSize(800, 600))
+    await win.setSize(new LogicalSize(400, 600))
     await win.center()
     await win.setFocus()
     setTimeout(() => { isProgrammaticMove = false }, 0)
