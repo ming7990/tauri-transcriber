@@ -56,9 +56,18 @@ export class AudioCapture {
     }
 
     if (this.type === 'system') {
-      const { invoke } = await import('@tauri-apps/api/core')
-      await invoke('start_system_capture')
-      this.onStatusChange?.('系统音频采集中（Tauri）')
+      if (typeof window !== 'undefined' && (window as any).api?.startSystemCapture) {
+        const res = await (window as any).api.startSystemCapture()
+        if (res?.ok) {
+          const pid = (res && 'pid' in res) ? (res as any).pid : undefined
+          this.onStatusChange?.(`系统音频采集中（Electron${pid ? ' · PID ' + pid : ''}）`)
+        } else {
+          const p = res?.path ? `: ${res.path}` : ''
+          this.onStatusChange?.(`系统音频采集未启动${p}`)
+        }
+      } else {
+        this.onStatusChange?.('系统音频采集中（未检测到Electron API）')
+      }
     } else if (!this.stream) {
       this.onStatusChange?.('正在获取音频流...')
       console.log('[音频捕获] 开始获取音频流，约束:', constraints)
@@ -98,8 +107,9 @@ export class AudioCapture {
 
   async stop() {
     if (this.type === 'system') {
-      const { invoke } = await import('@tauri-apps/api/core')
-      await invoke('stop_system_capture')
+      if (typeof window !== 'undefined' && (window as any).api?.stopSystemCapture) {
+        await (window as any).api.stopSystemCapture()
+      }
     }
     this.workletNode?.disconnect()
     if (this.type !== 'system') {

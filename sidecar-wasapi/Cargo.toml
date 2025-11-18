@@ -1,0 +1,12 @@
+[package]
+name = "sidecar-wasapi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasapi = "0.17"
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.21", features = ["tokio-native-tls"] }
+bytemuck = "1"
+anyhow = "1"
+futures-util = "0.3"

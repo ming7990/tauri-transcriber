@@ -52,11 +52,12 @@ ENV/
 .venv/
 python-backend/.venv/
 
-# Tauri
-src-tauri/target/
-src-tauri/bin/
-src-tauri/target/
-
+# Electron
+# 打包产物与临时目录无需提交
+out/
+release/
+*.asar
+sidecar-wasapi/target/
 # OS generated files
 Thumbs.db
 .DS_Store

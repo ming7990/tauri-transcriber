@@ -45,8 +45,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getCurrentWindow } from '@tauri-apps/api/window'
-import { LogicalSize } from '@tauri-apps/api/dpi'
+ 
 
 import { useTranscriptionTimer } from '../composables/useTranscriptionTimer'
 
@@ -56,12 +55,6 @@ const theme = ref<'dark' | 'light'>('dark')
 const themeClass = computed(() => theme.value === 'dark' ? 'theme-dark' : 'theme-light')
 
 onMounted(async () => {
-  const win = getCurrentWindow()
-  await win.setResizable(true)
-  await win.setDecorations(true)
-  await win.setAlwaysOnTop(false)
-  await win.setSize(new LogicalSize(400, 600))
-
   if (typeof document !== 'undefined') {
     document.body.classList.remove('bubble-mode')
     const saved = localStorage.getItem('ui:theme')
@@ -69,22 +62,8 @@ onMounted(async () => {
   }
 })
 
-const minimizeWindow = () => getCurrentWindow().minimize()
-const closeWindow = () => getCurrentWindow().close()
-
-const backToBubble = async () => {
-  try {
-    if (typeof window !== 'undefined') {
-      window.location.hash = ''
-    }
-    const win = getCurrentWindow()
-    await win.setResizable(false)
-    await win.setDecorations(false)
-    await win.setAlwaysOnTop(true)
-    await win.setSize(new LogicalSize(48, 48))
-    await win.setFocus()
-  } catch {}
-}
+const minimizeWindow = () => {}
+const closeWindow = () => {}
 
 const toggleMic = async () => {
   if (audioStore.isMicActive) {
