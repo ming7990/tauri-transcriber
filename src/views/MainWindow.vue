@@ -132,8 +132,8 @@ const zoomToBubble = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 8px 0 16px 0;
-  gap: 16px;
+  padding: 8px 0 0 0;
+  gap: 0;
   min-height: 0;
 }
 
@@ -220,7 +220,7 @@ const zoomToBubble = async () => {
   flex: 1;
   background: var(--bg);
   border: none;
-  padding: 16px;
+  padding: 0 16px;
   overflow-y: auto;
   min-height: 0;
 }
@@ -245,6 +245,7 @@ const zoomToBubble = async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-top: 16px;
 }
 
 .transcription-item {
@@ -338,7 +339,41 @@ const zoomToBubble = async () => {
   background: #16a34a;
   box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.25);
 }
+
 </style>
 
+<style>
+/* 全局滚动条样式 */
+.transcription-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.transcription-area::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.transcription-area::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.transcription-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.transcription-area::-webkit-scrollbar-button {
+  display: none;
+}
+
+.theme-dark .transcription-area::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.theme-light .transcription-area::-webkit-scrollbar-thumb {
+  background: #a3aab2;
+}
+</style>
 
 .label .icon { color: var(--chip-icon); }
