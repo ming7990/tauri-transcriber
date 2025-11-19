@@ -8,12 +8,16 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import BubbleWindow from './views/BubbleWindow.vue'
 import MainWindow from './views/MainWindow.vue'
 
-const mode = ref<'bubble' | 'main'>('bubble')
+const mode = ref<'bubble' | 'main'>('main')
 
 const updateMode = () => {
-  if (typeof window === 'undefined') { mode.value = 'bubble'; return }
-  const h = window.location.hash
-  mode.value = h === '#main' ? 'main' : 'bubble'
+  const hasElectronBubble = typeof window !== 'undefined' && (window as any).api?.bubble
+  const h = typeof window !== 'undefined' ? window.location.hash : ''
+  if (h === '#bubble' && hasElectronBubble) {
+    mode.value = 'bubble'
+  } else {
+    mode.value = 'main'
+  }
 }
 
 onMounted(() => {

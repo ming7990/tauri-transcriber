@@ -5,6 +5,7 @@
   --accent: #667eea;
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
+  --scrollbar: rgba(255, 255, 255, 0.35);
 }
 
 html,
@@ -65,3 +66,12 @@ body {
 .no-drag {
   -webkit-app-region: no-drag;
 }
+
+.iconfont-svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  fill: currentColor;
+}
+
+/* 移除自定义滚动条样式，使用系统/浏览器默认样式 */

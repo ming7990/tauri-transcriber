@@ -1,7 +1,7 @@
 <template>
   <div class="app-container" :class="themeClass">
     <div class="content panel">
-      <div class="header">
+      <div class="header draggable">
         <div class="controls no-drag">
           <button @click="toggleMic" :class="['btn', { active: audioStore.isMicActive }]">{{ audioStore.isMicActive ? '麦克风 · 开' : '麦克风 · 关' }}</button>
           <button @click="toggleSpeaker" :class="['btn', { active: audioStore.isSpeakerActive }]">{{ audioStore.isSpeakerActive ? '扬声器 · 开' : '扬声器 · 关' }}</button>
@@ -12,6 +12,13 @@
             </svg>
             <svg class="icon moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+        <div class="header-actions no-drag">
+          <button class="zoom-btn" @click="zoomToBubble" title="缩放回悬浮球">
+            <svg class="zoom-icon iconfont-svg" width="18" height="18" aria-hidden="true">
+              <use xlink:href="#icon-suofang" />
             </svg>
           </button>
         </div>
@@ -62,8 +69,12 @@ onMounted(async () => {
   }
 })
 
-const minimizeWindow = () => {}
-const closeWindow = () => {}
+const minimizeWindow = () => {
+  try { (window as any).api?.window?.minimize?.() } catch {}
+}
+const closeWindow = () => {
+  try { (window as any).api?.window?.close?.() } catch {}
+}
 
 const toggleMic = async () => {
   if (audioStore.isMicActive) {
@@ -89,6 +100,15 @@ const toggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
   try { localStorage.setItem('ui:theme', theme.value) } catch {}
 }
+
+const zoomToBubble = async () => {
+  try {
+    const active = audioStore.isMicActive || audioStore.isSpeakerActive
+    if (typeof window !== 'undefined' && (window as any).api?.bubble) {
+      await (window as any).api.bubble.showBubble(active)
+    }
+  } catch {}
+}
 </script>
 
 <style scoped>
@@ -103,8 +123,8 @@ const toggleTheme = () => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
-.app-container.theme-dark { --bg: #000000; --text: #fafafa; --text-secondary: #a0a7b4; --label-bg: #1a1a1a; --label-border: #2a2a2a; --divider: #2a2a2a; --icon: #9ca3af; --chip-icon: #cbd5e1; --scrollbar: #1f2937; --window-shadow: none; --panel-radius: 0; --container-padding: 0; --window-dropshadow: none; --panel-outline: transparent; }
-.app-container.theme-light { --bg: #ffffff; --text: #111827; --text-secondary: #6b7280; --label-bg: #ffffff; --label-border: #e6e7ea; --divider: #e5e7eb; --icon: #6b7280; --chip-icon: #9aa0a6; --scrollbar: #c7cdd4; --window-shadow: 0 16px 40px rgba(0,0,0,0.16), 0 2px 10px rgba(0,0,0,0.06); --panel-radius: 14px; --container-padding: 16px; --window-dropshadow: drop-shadow(0 14px 32px rgba(0,0,0,0.16)) drop-shadow(0 2px 12px rgba(0,0,0,0.08)); --panel-outline: #eceff1; }
+.app-container.theme-dark { --bg: #000000; --text: #fafafa; --text-secondary: #a0a7b4; --label-bg: #1a1a1a; --label-border: #2a2a2a; --divider: #2a2a2a; --icon: #9ca3af; --chip-icon: #cbd5e1; --scrollbar: #6b7280; --window-shadow: none; --panel-radius: 0; --container-padding: 0; --window-dropshadow: none; --panel-outline: transparent; }
+.app-container.theme-light { --bg: #ffffff; --text: #111827; --text-secondary: #6b7280; --label-bg: #ffffff; --label-border: #e6e7ea; --divider: #e5e7eb; --icon: #374151; --chip-icon: #4b5563; --scrollbar: #a3aab2; --window-shadow: 0 16px 40px rgba(0,0,0,0.16), 0 2px 10px rgba(0,0,0,0.06); --panel-radius: 14px; --container-padding: 0; --window-dropshadow: drop-shadow(0 14px 32px rgba(0,0,0,0.16)) drop-shadow(0 2px 12px rgba(0,0,0,0.08)); --panel-outline: #eceff1; }
 
 
 
@@ -112,7 +132,7 @@ const toggleTheme = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 8px 0 16px 0;
   gap: 16px;
   min-height: 0;
 }
@@ -129,10 +149,19 @@ const toggleTheme = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  height: 44px;
+  padding: 0;
   background: var(--bg);
   border-bottom: 1px solid var(--divider);
 }
+
+.header-actions { display: flex; align-items: center; gap: 8px; margin-right: 12px; }
+.zoom-btn { width: 32px; height: 32px; border: none; background: transparent; display: inline-flex; align-items: center; justify-content: center; color: var(--icon); transform-origin: center; transition: transform 200ms ease-out; }
+.zoom-btn:hover { transform: scale(1.1); }
+.zoom-icon { width: 18px; height: 18px; shape-rendering: geometricPrecision; }
+
+.theme-dark .zoom-btn { color: #ffffff; }
+.theme-light .zoom-btn { color: #374151; }
 
 .tabs {
   display: flex;
@@ -159,6 +188,10 @@ const toggleTheme = () => {
 .controls {
   display: flex;
   gap: 8px;
+  margin-left: 12px;
+  border-radius: 9999px;
+  box-shadow: 0 0 4px 2px #e0e0e0;
+  padding: 2px 4px;
 }
 
 .top-config {
@@ -192,16 +225,7 @@ const toggleTheme = () => {
   min-height: 0;
 }
 
-.transcription-area::-webkit-scrollbar {
-  width: 8px;
-}
-.transcription-area::-webkit-scrollbar-track {
-  background: rgba(3, 7, 18, 0.6);
-}
-.transcription-area::-webkit-scrollbar-thumb {
-  background: var(--scrollbar);
-  border-radius: 8px;
-}
+
 
 .summary-area {
   flex: 1;

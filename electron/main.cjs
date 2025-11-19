@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
@@ -18,6 +18,8 @@ const createMainWindow = () => {
     height: 600,
     show: true,
     backgroundColor: '#ffffff',
+    frame: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -50,6 +52,23 @@ const createBubbleWindow = () => {
   const url = getLoadUrl()
   if (url.startsWith('http')) bubbleWindow.loadURL(url + '#bubble')
   else bubbleWindow.loadURL(`file://${path.join(__dirname, '..', 'dist', 'index.html')}#bubble`)
+}
+
+const snapAndClampBubble = () => {
+  try {
+    if (!bubbleWindow) return
+    const b = bubbleWindow.getBounds()
+    const d = screen.getDisplayNearestPoint({ x: b.x + Math.floor(b.width / 2), y: b.y + Math.floor(b.height / 2) })
+    const bounds = d?.bounds || { x: 0, y: 0, width: screen.getPrimaryDisplay().bounds.width, height: screen.getPrimaryDisplay().bounds.height }
+    let nx = Math.min(Math.max(bounds.x, b.x), bounds.x + bounds.width - b.width)
+    let ny = Math.min(Math.max(bounds.y, b.y), bounds.y + bounds.height - b.height)
+    const SNAP = 12
+    if (Math.abs(nx - bounds.x) < SNAP) nx = bounds.x
+    if (Math.abs((bounds.x + bounds.width - b.width) - nx) < SNAP) nx = bounds.x + bounds.width - b.width
+    if (Math.abs(ny - bounds.y) < SNAP) ny = bounds.y
+    if (Math.abs((bounds.y + bounds.height - b.height) - ny) < SNAP) ny = bounds.y + bounds.height - b.height
+    bubbleWindow.setPosition(Math.floor(nx), Math.floor(ny))
+  } catch (e) { console.error('snapAndClampBubble failed', e) }
 }
 
 const resolveSidecar = () => {
@@ -117,6 +136,23 @@ ipcMain.handle('bubble-get-display-bounds', async () => {
     return null
   }
 })
+ipcMain.handle('show-bubble-window', async (_evt, animating) => {
+  try {
+    if (!bubbleWindow) createBubbleWindow()
+    bubbleWindow.show(); bubbleWindow.focus()
+    if (mainWindow) mainWindow.hide()
+    try { bubbleWindow.webContents.send('bubble-animating', !!animating) } catch {}
+    try { bubbleWindow.webContents.send('bubble-set-expanded', false) } catch {}
+    snapAndClampBubble()
+    return { ok: true }
+  } catch (e) {
+    console.error('show-bubble-window failed', e)
+    return { ok: false, error: String(e) }
+  }
+})
+ipcMain.handle('bubble-set-animating', async (_evt, animating) => {
+  try { if (bubbleWindow) bubbleWindow.webContents.send('bubble-animating', !!animating); return { ok: true } } catch (e) { console.error(e); return { ok: false } }
+})
 ipcMain.handle('open-main-window', async () => {
   try {
     if (!mainWindow) createMainWindow()
@@ -131,6 +167,23 @@ ipcMain.handle('open-main-window', async () => {
 
 app.whenReady().then(() => {
   createBubbleWindow()
+  try {
+    globalShortcut.register('Alt+Z', () => {
+      try {
+        if (mainWindow && mainWindow.isVisible()) {
+          if (!bubbleWindow) createBubbleWindow()
+          bubbleWindow.show(); bubbleWindow.focus()
+          mainWindow.hide()
+          try { bubbleWindow.webContents.send('bubble-set-expanded', false) } catch {}
+          snapAndClampBubble()
+        } else {
+          if (!mainWindow) createMainWindow()
+          mainWindow.show(); mainWindow.focus()
+          if (bubbleWindow) bubbleWindow.hide()
+        }
+      } catch (e) { console.error('globalShortcut Alt+Z failed', e) }
+    })
+  } catch (e) { console.error('register shortcut failed', e) }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createBubbleWindow()
   })
@@ -138,4 +191,15 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+app.on('will-quit', () => {
+  try { globalShortcut.unregisterAll() } catch {}
+})
+
+// 窗口控制 IPC
+ipcMain.handle('window-minimize', async () => {
+  try { if (mainWindow) mainWindow.minimize(); return { ok: true } } catch (e) { console.error('window-minimize failed', e); return { ok: false, error: String(e) } }
+})
+ipcMain.handle('window-close', async () => {
+  try { if (mainWindow) mainWindow.close(); return { ok: true } } catch (e) { console.error('window-close failed', e); return { ok: false, error: String(e) } }
 })
