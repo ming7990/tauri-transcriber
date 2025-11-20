@@ -16,8 +16,9 @@ const createMainWindow = () => {
   mainWindow = new BrowserWindow({
     width: 400,
     height: 600,
-    show: true,
-    backgroundColor: '#ffffff',
+    show: false,
+    useContentSize: true,
+    backgroundColor: '#121212',
     frame: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -30,12 +31,14 @@ const createMainWindow = () => {
   const url = getLoadUrl()
   if (url.startsWith('http')) mainWindow.loadURL(url + '#main')
   else mainWindow.loadURL(`file://${path.join(__dirname, '..', 'dist', 'index.html')}#main`)
+  mainWindow.once('ready-to-show', () => { try { mainWindow.show(); mainWindow.focus() } catch {} })
 }
 
 const createBubbleWindow = () => {
   bubbleWindow = new BrowserWindow({
     width: 48,
     height: 48,
+    show: false,
     frame: false,
     transparent: true,
     resizable: false,
@@ -52,6 +55,7 @@ const createBubbleWindow = () => {
   const url = getLoadUrl()
   if (url.startsWith('http')) bubbleWindow.loadURL(url + '#bubble')
   else bubbleWindow.loadURL(`file://${path.join(__dirname, '..', 'dist', 'index.html')}#bubble`)
+  bubbleWindow.once('ready-to-show', () => { try { bubbleWindow.show() } catch {} })
 }
 
 const snapAndClampBubble = () => {

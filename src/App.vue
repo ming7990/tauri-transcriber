@@ -1,12 +1,12 @@
 <template>
-  <BubbleWindow v-if="mode === 'bubble'" />
-  <MainWindow v-else />
+  <component :is="mode === 'bubble' ? BubbleAsync : MainAsync" />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import BubbleWindow from './views/BubbleWindow.vue'
-import MainWindow from './views/MainWindow.vue'
+import { ref, onMounted, onUnmounted, h, defineAsyncComponent } from 'vue'
+const Skeleton = { render: () => h('div', { style: { width: '100%', height: '100%' } }) }
+const BubbleAsync = defineAsyncComponent({ loader: () => import('./views/BubbleWindow.vue'), loadingComponent: Skeleton })
+const MainAsync = defineAsyncComponent({ loader: () => import('./views/MainWindow.vue'), loadingComponent: Skeleton })
 
 const mode = ref<'bubble' | 'main'>('main')
 

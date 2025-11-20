@@ -24,4 +24,11 @@ function loadIconfont(href: string, type: 'css' | 'js') {
   }
 }
 
-loadIconfont('/iconfont/iconfont.js', 'js')
+if (typeof window !== 'undefined') {
+  const schedule = (fn: () => void) => {
+    const ric = (window as any).requestIdleCallback
+    if (typeof ric === 'function') ric(fn)
+    else setTimeout(fn, 0)
+  }
+  schedule(() => loadIconfont('/iconfont/iconfont.js', 'js'))
+}

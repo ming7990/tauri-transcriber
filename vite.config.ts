@@ -10,5 +10,17 @@ export default defineConfig(() => {
       port: 1422,
       strictPort: true,
     },
+    build: {
+      sourcemap: false,
+      target: 'es2020',
+      minify: 'esbuild',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['vue', 'pinia']
+          }
+        }
+      }
+    }
   }
 })
