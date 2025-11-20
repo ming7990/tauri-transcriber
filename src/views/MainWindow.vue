@@ -30,7 +30,7 @@
           <div v-for="(item, idx) in audioStore.transcriptions" :key="idx" class="transcription-item">
             <div class="label">
               <span class="icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="7" r="4"/>
                   <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
                 </svg>
@@ -58,7 +58,7 @@ import { useTranscriptionTimer } from '../composables/useTranscriptionTimer'
 
 const { audioStore, isTranscribing, elapsedLabel } = useTranscriptionTimer()
 const activeTab = ref<'transcript' | 'summary'>('transcript')
-const theme = ref<'dark' | 'light'>('dark')
+const theme = ref<'dark' | 'light'>('light')
 const themeClass = computed(() => theme.value === 'dark' ? 'theme-dark' : 'theme-light')
 
 onMounted(async () => {
@@ -266,6 +266,7 @@ const zoomToBubble = async () => {
   color: var(--text-secondary);
 }
 .icon { display: inline-flex; }
+.label .icon { color: var(--chip-icon); }
 .speaker { color: var(--text-secondary); font-size: 13px; }
 .range { color: var(--text-secondary); font-size: 13px; }
 
@@ -375,5 +376,3 @@ const zoomToBubble = async () => {
   background: #a3aab2;
 }
 </style>
-
-.label .icon { color: var(--chip-icon); }

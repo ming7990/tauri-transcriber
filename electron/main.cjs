@@ -18,7 +18,7 @@ const createMainWindow = () => {
     height: 600,
     show: false,
     useContentSize: true,
-    backgroundColor: '#121212',
+    backgroundColor: '#ffffff',
     frame: false,
     autoHideMenuBar: true,
     webPreferences: {
