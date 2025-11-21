@@ -14,12 +14,13 @@ const getLoadUrl = () => {
 
 const createMainWindow = () => {
   mainWindow = new BrowserWindow({
-    width: 400,
+    width: 480,  // 增加宽度以避免裁剪
     height: 600,
     show: false,
     useContentSize: true,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#00000000',  // 完全透明背景
     frame: false,
+    transparent: true,  // 关键：窗口透明
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -31,7 +32,23 @@ const createMainWindow = () => {
   const url = getLoadUrl()
   if (url.startsWith('http')) mainWindow.loadURL(url + '#main')
   else mainWindow.loadURL(`file://${path.join(__dirname, '..', 'dist', 'index.html')}#main`)
-  mainWindow.once('ready-to-show', () => { try { mainWindow.show(); mainWindow.focus() } catch {} })
+  mainWindow.once('ready-to-show', () => { 
+    try { 
+      // 确保窗口在屏幕中央，避免边缘裁剪
+      const { screen } = require('electron')
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+      
+      // 计算居中位置
+      const windowBounds = mainWindow.getBounds()
+      const centerX = Math.round((screenWidth - windowBounds.width) / 2)
+      const centerY = Math.round((screenHeight - windowBounds.height) / 2)
+      
+      mainWindow.setPosition(centerX, centerY)
+      mainWindow.show()
+      mainWindow.focus()
+    } catch {} 
+  })
 }
 
 const createBubbleWindow = () => {
