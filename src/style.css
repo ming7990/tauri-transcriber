@@ -156,6 +156,19 @@ body.has-glass .card::after {
   display: none !important;
 }
 body.has-glass *:hover { background: transparent !important }
-::-webkit-scrollbar { width: 8px; height: 8px }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2) }
-*:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35) }
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .25);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}

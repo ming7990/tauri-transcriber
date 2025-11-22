@@ -7,6 +7,7 @@ interface Transcription {
   endLabel: string
   text: string
   speaker: number
+  ts: number
 }
 
 export const useAudioStore = defineStore('audio', () => {
@@ -37,7 +38,8 @@ export const useAudioStore = defineStore('audio', () => {
           startLabel: format(start),
           endLabel: format(now),
           text,
-          speaker: 1
+          speaker: 1,
+          ts: now.getTime()
         })
       }
       
@@ -72,7 +74,8 @@ export const useAudioStore = defineStore('audio', () => {
           startLabel: format(start),
           endLabel: format(now),
           text,
-          speaker: 2
+          speaker: 2,
+          ts: now.getTime()
         })
       }
       audioCapture.onStatusChange = (newStatus: string) => { status.value = newStatus }
