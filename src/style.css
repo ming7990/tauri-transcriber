@@ -14,6 +14,9 @@
   --liquid-glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   --liquid-glass-blur: 24px;
 
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
   /* Contrast helpers for light backgrounds */
   --fg-outline: rgba(0, 0, 0, 0.35);
   --border-dark: rgba(0, 0, 0, 0.08);
@@ -40,6 +43,10 @@ body {
     linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   background-attachment: fixed;
+}
+
+body.has-glass {
+  background: transparent !important;
 }
 
 .glass {
@@ -130,4 +137,25 @@ body {
   fill: currentColor;
 }
 
-/* 移除自定义滚动条样式，使用系统/浏览器默认样式 */
+body.has-glass .glass,
+body.has-glass .liquid-glass,
+body.has-glass .capsule-bar,
+body.has-glass .card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  border-radius: 0 !important;
+}
+body.has-glass .capsule-bar::before,
+body.has-glass .capsule-bar::after,
+body.has-glass .card::before,
+body.has-glass .card::after {
+  display: none !important;
+}
+body.has-glass *:hover { background: transparent !important }
+::-webkit-scrollbar { width: 8px; height: 8px }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2) }
+*:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35) }

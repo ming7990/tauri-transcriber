@@ -1,90 +1,102 @@
 <template>
-  <!-- 简洁优雅的液态玻璃 - 精确匹配图二效果 -->
-  <!-- 顶部玻璃胶囊栏 -->
-  <div class="glass-capsule">
-    <div class="capsule-segment" @click="toggleListening" :class="{ active: isListening }">
-      <span class="segment-label">聆听</span>
-      <svg class="segment-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="4" y="8" width="3" height="8" rx="1"/>
-        <rect x="9" y="5" width="3" height="14" rx="1"/>
-        <rect x="14" y="8" width="3" height="8" rx="1"/>
-        <rect x="19" y="11" width="3" height="2" rx="1"/>
-      </svg>
-    </div>
-    
-    <div class="capsule-divider"></div>
-    
-    <div class="capsule-segment" @click="handleAsk">
-      <span class="segment-label">提问</span>
-    </div>
-    
-    <div class="capsule-divider"></div>
-    
-    <div class="capsule-segment" @click="toggleShowHide">
-      <span class="segment-label">{{ isVisible ? '隐藏' : '显示' }}</span>
-      <span class="shortcut">⌘</span>
-      <span class="shortcut-key">\</span>
-    </div>
-    
-    <div class="capsule-divider"></div>
-    
-    <div class="capsule-segment menu-segment" @click="handleMoreOptions">
-      <svg class="segment-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="5" r="1"/>
-        <circle cx="12" cy="12" r="1"/>
-        <circle cx="12" cy="19" r="1"/>
-      </svg>
-    </div>
-  </div>
-
-  <!-- 主玻璃卡片 -->
-  <div class="glass-card">
-    <div class="card-header">
-      <span class="card-title">实时洞察</span>
-      <div class="card-actions">
-        <button class="action-pill" @click="toggleTranscript">
-          <span class="pill-text">显示转录</span>
-        </button>
-        <button class="action-icon" @click="handleAudioWave">
-          <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/>
-          </svg>
-        </button>
-        <button class="action-icon" @click="handleCopy">
-          <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </button>
+  <div class="ui-root" :class="uiState">
+    <div class="capsule-bar" @pointerdown="onCapsulePointerDown" @pointerup="onCapsulePointerUp"
+      @pointermove="onCapsulePointerMove">
+      <button class="cap-btn primary no-drag" :class="{ active: isListening, completed: isCompleted }"
+        @click="onListen">
+        <span class="cap-label">Listen</span>
+        <svg class="cap-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <rect x="4" y="8" width="3" height="8" rx="1" />
+          <rect x="9" y="5" width="3" height="14" rx="1" />
+          <rect x="14" y="8" width="3" height="8" rx="1" />
+          <rect x="19" y="11" width="3" height="2" rx="1" />
+        </svg>
+      </button>
+      <div class="cap-gap"></div>
+      <div class="cap-group">
+        <button class="cap-btn no-drag" @click="showAsk = true"><span class="cap-label">提问</span></button>
+        <div class="cap-gap"></div>
+        <div class="shortcut no-drag">^</div>
+        <div class="shortcut no-drag">↵</div>
       </div>
+      <div class="cap-gap"></div>
+      <button class="cap-btn no-drag" @click="toggleUI"><span class="cap-label">显示/隐藏</span>
+        <div class="shortcut">^</div>
+        <div class="shortcut">\</div>
+      </button>
+      <div class="cap-gap"></div>
+      <button class="cap-btn menu no-drag" @click="openMenu">
+        <svg class="cap-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="12" cy="5" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="12" cy="19" r="1" />
+        </svg>
+      </button>
     </div>
-    
-    <div class="card-content">
-      <h2 class="content-heading">{{ audioStore.transcriptions.length > 0 ? '实时转录' : '开始聆听' }}</h2>
-      <div class="content-area" v-if="audioStore.transcriptions.length > 0">
-        <div v-for="(item, idx) in audioStore.transcriptions.slice(-3)" :key="idx" class="transcription-item">
-          <span class="item-number">{{ idx + 1 }}.</span>
-          <span class="item-text">{{ item.text }}</span>
+
+    <div class="card listen" v-show="isListening && uiState !== 'hidden'">
+      <div class="card-top">
+        <div class="card-title">正在监听 {{ elapsedLabel }}</div>
+        <div class="card-actions">
+          <button class="top-pill no-drag" @click="toggleInsights">显示洞察</button>
+          <button class="top-pill no-drag" @click="copyContent">复制</button>
         </div>
       </div>
-      <div class="placeholder-panel" v-else>
-        <p class="placeholder-text">点击“聆听”开始转写音频…</p>
+      <div class="card-divider"></div>
+      <div class="card-body" :class="{ loading: isTranscribing && audioStore.transcriptions.length === 0 }">
+        <div class="loading-dots" v-if="isTranscribing && audioStore.transcriptions.length === 0">
+          <span></span><span></span><span></span></div>
+        <div class="scroll" v-else>
+          <div v-for="(item, idx) in audioStore.transcriptions" :key="idx" class="bubble"
+            :class="idx % 2 === 0 ? 'other' : 'me'">
+            <div class="text">{{ item.text }}</div>
+            <div class="time">{{ item.ts || '' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card ask" v-if="showAsk">
+    <div class="card-top">
+      <div class="card-title">提问</div>
+    </div>
+    <div class="card-divider"></div>
+    <div class="ask-body">
+      <div class="ask-scroll">
+        <div class="ask-line">
+          <div class="line-copy">复制</div>
+          <div class="line-text">示例内容</div>
+        </div>
+      </div>
+      <div class="ask-input">
+        <input class="input" v-model="askText" placeholder="输入问题" />
+        <div class="actions"><button class="icon-btn">发送</button><button class="icon-btn"
+            @click="askText = ''">清空</button></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useTranscriptionTimer } from '../composables/useTranscriptionTimer'
 
 const { audioStore, isTranscribing, elapsedLabel } = useTranscriptionTimer()
 
 const isListening = ref(false)
-const isVisible = ref(true)
+const justDragged = ref(false)
+const dragStartX = ref(0)
+const dragStartY = ref(0)
+const uiState = ref<'showing' | 'hiding' | 'sliding-in' | 'hidden'>('showing')
+const showAsk = ref(false)
+const askText = ref('')
 
-const toggleListening = async () => {
+const isCompleted = computed(() => !isTranscribing.value && audioStore.transcriptions.length > 0)
+
+const onListen = async () => {
+  if (justDragged.value) return
   isListening.value = !isListening.value
   if (isListening.value) {
     await audioStore.startMicrophone()
@@ -93,329 +105,438 @@ const toggleListening = async () => {
   }
 }
 
-const handleAsk = () => {
-  console.log('Ask button clicked')
-}
-
-const toggleShowHide = () => {
-  isVisible.value = !isVisible.value
-}
-
-const handleMoreOptions = () => {
-  console.log('More options clicked')
-}
-
-const toggleTranscript = () => {
-  console.log('Toggle transcript')
-}
-
-const handleAudioWave = () => {
-  console.log('Audio wave clicked')
-}
-
-const handleCopy = () => {
-  const content = document.querySelector('.content-area')?.textContent || document.querySelector('.placeholder-panel')?.textContent
-  if (content) {
-    navigator.clipboard.writeText(content)
-    console.log('Content copied to clipboard')
+const toggleUI = () => {
+  if (uiState.value === 'hidden') {
+    uiState.value = 'sliding-in'
+    setTimeout(() => uiState.value = 'showing', 300)
+  } else {
+    uiState.value = 'hiding'
+    setTimeout(() => uiState.value = 'hidden', 300)
   }
 }
+
+const toggleInsights = () => { }
+const openMenu = () => { }
+
+const copyContent = () => {
+  const text = audioStore.transcriptions.map(t => t.text).join('\n') || 'Waiting for speech...'
+  navigator.clipboard.writeText(text)
+}
+
+const onCapsulePointerDown = (e: PointerEvent) => {
+  dragStartX.value = e.clientX
+  dragStartY.value = e.clientY
+}
+
+const onCapsulePointerUp = (e: PointerEvent) => {
+  const dx = e.clientX - dragStartX.value
+  const dy = e.clientY - dragStartY.value
+  if (Math.sqrt(dx * dx + dy * dy) > 3) {
+    justDragged.value = true
+    setTimeout(() => justDragged.value = false, 200)
+  }
+}
+
+const onCapsulePointerMove = (_e: PointerEvent) => { }
 </script>
 
 <style scoped>
-/* 简洁优雅的液态玻璃效果 - 精确匹配图二 */
+.ui-root {
+  position: relative;
+  --card-w: clamp(460px, 68vw, 960px);
+}
 
-/* 顶部玻璃胶囊 - 图二风格高级玻璃效果 */
-.glass-capsule {
+.ui-root.showing {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: none;
+  transition: opacity .3s, transform .3s
+}
+
+.ui-root.hiding {
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  filter: blur(2px);
+  transition: opacity .3s, transform .3s
+}
+
+.ui-root.sliding-in {
+  opacity: 0;
+  transform: translateY(-8px) scale(.98);
+  filter: blur(2px);
+  transition: opacity .3s, transform .3s
+}
+
+.ui-root.hidden {
+  opacity: 0;
+  pointer-events: none
+}
+
+.capsule-bar {
   position: fixed;
   top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
-  background:
-    linear-gradient(180deg, rgba(39, 39, 39, 0.8), rgba(39, 39, 39, 0.8));
-  border: 1px solid transparent;
-  border-image: linear-gradient(90deg, #19D3FF, #0A6BFF) 1;
+  height: 35px;
+  width: calc(var(--card-w) * .75);
   border-radius: 9999px;
-  padding: 6px 8px;
-  box-shadow:
-    0 0 8px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 rgba(255, 255, 255, 0.6);
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  max-width: 95vw;
-  overflow: visible;
-  z-index: 1000;
+  gap: 4px;
+  -webkit-app-region: drag;
 }
 
-/* 玻璃边缘高光 - 图二风格柔和高光 */
-.glass-capsule::before {
+.capsule-bar::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.08) 30%,
-    transparent 60%,
-    rgba(255, 255, 255, 0.12) 100%
-  );
-  pointer-events: none;
-  mix-blend-mode: overlay;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, .6)
 }
 
-.capsule-segment {
+.capsule-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+  background: rgba(255, 255, 255, .3)
+}
+
+.cap-gap {
+  width: 2px;
+  height: 1px
+}
+
+.cap-group {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  gap: 4px;
+  border-radius: 6px
+}
+
+.cap-btn {
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(255, 255, 255, .95);
+  border: 0;
+  cursor: pointer;
+  font: 600 13px var(--font-sans, system-ui)
 }
 
-.capsule-segment:hover {
-  background: rgba(255, 255, 255, 0.15);
+.cap-btn:hover {
+  background: rgba(255, 255, 255, .1)
 }
 
-.capsule-segment.active {
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+.cap-btn.active {
+  background: rgba(255, 0, 0, .55);
+  color: #fff
 }
 
-.segment-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  white-space: nowrap;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 1px var(--fg-outline);
+.cap-btn.completed {
+  background: rgba(255, 255, 255, .6);
+  color: #000
 }
 
-.segment-icon {
-  stroke: #ffffff;
-  fill: none;
-  width: 12px;
-  height: 12px;
-  opacity: 0.9;
-  paint-order: stroke fill;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px var(--fg-outline));
+.cap-btn.completed::after {
+  display: none
 }
 
-.shortcut,
-.shortcut-key {
-  font-size: 10px;
-  font-weight: 600;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: 4px;
-  font-family: 'SF Mono', Monaco, monospace;
+.cap-btn.menu {
+  width: 29px;
+  height: 29px;
+  justify-content: center
 }
 
-.capsule-divider {
-  width: 1px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.2);
-  margin: 0 2px;
+.cap-label {
+  white-space: nowrap
 }
 
-.menu-segment {
-  padding: 8px 12px;
+.cap-icon {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor
 }
 
-/* 主玻璃卡片 - 高级玻璃效果 */
-.glass-card {
+.shortcut {
+  width: 13px;
+  height: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .1);
+  font: 600 8px var(--font-mono, ui-monospace);
+  color: rgba(255, 255, 255, .95)
+}
+
+.card {
   position: fixed;
-  top: 88px;
   left: 50%;
   transform: translateX(-50%);
-  backdrop-filter: blur(35px) saturate(220%);
-  -webkit-backdrop-filter: blur(35px) saturate(220%);
-  background:
-    linear-gradient(180deg, rgba(39, 39, 39, 0.88), rgba(39, 39, 39, 0.88));
-  border: 1px solid transparent;
-  border-image: linear-gradient(120deg, #19D3FF, #0A6BFF) 1;
-  border-radius: 24px;
-  padding: 32px;
-  box-shadow:
-    0 1px 12px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 rgba(255, 255, 255, 0.6);
-  width: 380px;
-  max-width: 90vw;
-  z-index: 999;
+  border-radius: 12px;
+  overflow: hidden
 }
 
-/* 卡片玻璃边缘高光 - 图二风格柔和高光 */
-.glass-card::before {
+.card.listen {
+  top: 82px;
+  width: var(--card-w);
+  max-width: 92vw
+}
+
+.card.listen::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.10) 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.08) 75%,
-    rgba(255, 255, 255, 0.16) 100%
-  );
-  pointer-events: none;
-  mix-blend-mode: overlay;
+  inset: 0;
+  background: rgba(0, 0, 0, .6)
 }
 
-.card-header {
+.card.listen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: 12px;
+  -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+  background: rgba(255, 255, 255, .3)
+}
+
+.card-top {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 2;
+  min-height: 30px;
+  padding: 8px 12px
 }
 
-.card-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-  opacity: 0.9;
-  text-shadow: 0 1px 1px var(--fg-outline);
+.card-divider {
+  position: relative;
+  z-index: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, .1)
 }
 
 .card-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 6px
 }
 
-.action-pill {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+.top-pill {
+  border: 0;
   border-radius: 12px;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  padding: 4px 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, .9);
+  cursor: pointer
 }
 
-.action-pill:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+.top-pill:hover {
+  background: rgba(255, 255, 255, .1)
 }
 
-.action-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.card-title {
+  font: 700 13px var(--font-sans, system-ui);
+  color: rgba(255, 255, 255, .95)
 }
 
-.action-icon:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.icon {
-  stroke: #ffffff;
-  fill: none;
-  width: 12px;
-  height: 12px;
-  paint-order: stroke fill;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px var(--fg-outline));
-}
-
-.card-content {
+.card-body {
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  padding: 10px
 }
 
-.content-heading {
-  font-size: 28px;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 24px 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-  line-height: 1.2;
-  text-shadow: 0 1px 1px var(--fg-outline);
-}
-
-.content-area {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.transcription-item {
-  display: flex;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.transcription-item:last-child {
-  border-bottom: none;
-}
-
-.item-number {
-  font-size: 12px;
-  font-weight: 500;
-  color: #ffffff;
-  opacity: 0.8;
-  min-width: 18px;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-}
-
-.item-text {
-  font-size: 12px;
-  font-weight: 400;
-  color: #ffffff;
-  line-height: 1.5;
-  flex: 1;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-  text-shadow: 0 1px 1px var(--fg-outline);
-}
-
-.placeholder-panel {
+.card-body.loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  min-height: 160px
 }
 
-.placeholder-text {
-  font-size: 12px;
-  color: #ffffff;
-  opacity: 0.7;
-  font-style: italic;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-  text-align: center;
+.loading-dots {
+  display: inline-flex;
+  gap: 6px
 }
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .6);
+  animation: pulse .9s infinite ease-in-out
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: .15s
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: .3s
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: .4;
+    transform: scale(.9)
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1)
+  }
+}
+
+.scroll {
+  max-height: 320px;
+  overflow: auto
+}
+
+.scroll::-webkit-scrollbar {
+  width: 8px
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .2)
+}
+
+.scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .35)
+}
+
+.bubble {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 6px
+}
+
+.bubble.other {
+  background: rgba(255, 255, 255, .1);
+  color: #fff
+}
+
+.bubble.me {
+  background: rgba(0, 122, 255, .8);
+  color: #fff
+}
+
+.bubble .text {
+  flex: 1;
+  font: 400 12px var(--font-sans, system-ui)
+}
+
+.bubble .time {
+  opacity: .7;
+  font: 400 10px var(--font-mono, ui-monospace)
+}
+
+.ask {
+  top: calc(128px + 420px);
+  width: var(--card-w);
+  max-width: 92vw;
+  backdrop-filter: blur(10px)
+}
+
+.ask::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .6)
+}
+
+.ask::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 12px
+}
+
+.ask-body {
+  position: relative;
+  z-index: 1
+}
+
+.ask-scroll {
+  max-height: 240px;
+  overflow: auto;
+  padding: 8px 12px
+}
+
+.ask-line {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 8px
+}
+
+.ask-line:hover {
+  background: rgba(255, 255, 255, .05)
+}
+
+.line-copy {
+  margin-right: 12px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 8px;
+  padding: 2px 6px
+}
+
+.line-text {
+  flex: 1
+}
+
+.ask-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(0, 0, 0, .2)
+}
+
+.input {
+  flex: 1;
+  height: 28px;
+  border-radius: 20px;
+  border: 0;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, .6);
+  color: #fff
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, .6)
+}
+
+.actions {
+  display: flex;
+  gap: 4px
+}
+
+.icon-btn {
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, .9)
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, .1)}
 </style>
